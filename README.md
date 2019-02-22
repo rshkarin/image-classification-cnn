@@ -4,7 +4,7 @@ The image classification CNN served with Flask
 Run traning of a model with a default parameters and save a model parameters to /app/model-output/params.ini.
 ```sh
 sudo docker run -v ~/images:/app/images -p 5000:80 -t -i image-cnn run.py \
-train --images-dir /app/images/*/*.jpeg --network-name net-nail \
+train --images-dir /app/images/*/*.jpeg --network-name net \
 --model-output-dir /app/model-output --model-params-output-path /app/model-output/params.ini \
 --num-epochs 50  --verbosity 1
 ```
