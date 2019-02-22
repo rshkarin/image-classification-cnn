@@ -1,6 +1,11 @@
 # image-classification-cnn
 The image classification CNN served with Flask
 
+Build a container.
+```sh
+sudo docker build -t image-cnn:latest .
+```
+
 Run traning of a model with a default parameters and save a model parameters to /app/model-output/params.ini.
 ```sh
 sudo docker run -v ~/images:/app/images -p 5000:80 -t -i image-cnn run.py \
