@@ -41,15 +41,18 @@ def run_training(args):
         }
     }
 
-    aug_params = augmentation_params if args.do_augmentation is not None else None
+    aug_params = augmentation_params if args.do_augmentation else None
+    steps_per_epoch_mult = args.aug_steps_epoch_multiplier \
+                                if args.do_augmentation else 1
 
     if not utils.USE_AUG:
         aug_params = None
+        steps_per_epoch_mult = 1
 
     data_gen_kwargs = {
         'normalize': True,
         'batch_size': args.batch_size,
-        'n_classes': args.num_classes + 1,
+        'n_classes': args.num_classes,
         'shuffle': True,
         'augmentation_params': aug_params,
         'prediction': False,
@@ -80,18 +83,22 @@ def run_training(args):
                       batch_normalization=args.batch_normalization,
                       min_receptive_field_size=args.min_receptive_field,
                       loss=args.loss_name,
+                      metrics=[args.accuracy_name],
                       learning_rate=args.learning_rate,
+                      optimizer=args.optimizer_name,
                       early_stopping_patience=args.early_stopping_patience,
                       learning_rate_patience=args.learning_rate_patience,
                       validation_split=args.validation_split)
 
-    net.train_with_generator(train_gen, valid_gen, verbose=args.verbosity)
+    net.train_with_generator(train_gen,
+                             valid_gen,
+                             steps_per_epoch_multiplier=steps_per_epoch_mult,
+                             verbose=args.verbosity)
 
     arch_params, proc_params = net.get_parameters(), train_gen.process_kwargs
-    #utils.write_config_file(net.model_params_path, arch_params, proc_params)
     utils.write_config_file(args.model_params_output_path, arch_params, proc_params)
 
-    
+
 def run_prediction(args):
     """Perform prediction of a set of images in `image-dir`.
     """
@@ -103,7 +110,7 @@ def run_prediction(args):
     data_gen_kwargs = {
         'normalize': True,
         'batch_size': args.batch_size,
-        'n_classes': arch_params['n_classes'] + 1,
+        'n_classes': arch_params['n_classes'],
         'shuffle': True,
         'augmentation_params': None,
         'prediction': True,
@@ -219,10 +226,19 @@ The commands are:
                             type=str,
                             help='Name of loss function',
                             default='binary_crossentropy')
+        parser.add_argument('--accuracy-name',
+                            type=str,
+                            help='Name of accuracy function',
+                            default='accuracy')
         parser.add_argument('--learning-rate',
                             type=float,
                             help='Learning rate of a network model',
                             default=0.0001)
+        parser.add_argument('--optimizer-name',
+                            type=str,
+                            choices=['adam', 'sgd', 'rmsprop', 'nadam'],
+                            help='Optimizer used for traning of a network model',
+                            default='adam')
         parser.add_argument('--early-stopping-patience',
                             type=int,
                             help='Number of epochs with no improvement '
@@ -255,6 +271,11 @@ The commands are:
         parser.add_argument('--do-augmentation',
                             action='store_true',
                             help='Do data augmentation')
+        parser.add_argument('--aug-steps-epoch-multiplier',
+                            type=int,
+                            help='Number of times pass through the complete '
+                                 'dataset during data augmentation',
+                            default=10)
         parser.add_argument('--aug-hf-probability',
                             type=float,
                             help='Probability of horizontal flip during augmentation',

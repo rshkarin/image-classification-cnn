@@ -140,7 +140,7 @@ def read_config_file(config_path):
 
     arch_params = dict(config.items('Network architecture'))
     str_keys = set(['model_output_dir', 'csv_log_path', 'loss',
-                    'model_params_path', 'net_name',
+                    'model_params_path', 'net_name', 'optimizer',
                     'activation_name', 'model_path'])
     digit_keys = set(arch_params.keys()) - str_keys
 
@@ -226,11 +226,9 @@ def save_predictions(output_path, predictions, image_paths):
         logger.error('Error: {}'.format(os.strerror(ex.errno)))
         sys.exit(1)
 
-    prob_valid, prob_invalid = np.squeeze(predictions), \
-                               1. - np.squeeze(predictions)
     df = pd.DataFrame({'paths': image_paths,
-                       'probability class 0': prob_invalid,
-                       'probability class 1': prob_valid})
+                       'probability class 0': predictions[:,0],
+                       'probability class 1': predictions[:,1]})
 
     df.to_csv(output_path, index=False)
 

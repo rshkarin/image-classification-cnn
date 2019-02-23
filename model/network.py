@@ -9,7 +9,6 @@ from keras import backend as K
 from keras.layers import Conv2D, MaxPooling2D, BatchNormalization
 from keras.layers import Input, Dense, Flatten, Dropout, Activation
 from keras.models import Model, Sequential
-from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
@@ -27,12 +26,12 @@ class CNN(object):
     def __init__(self, input_shape=(128, 128), net_name='network', n_dense_neurons=1000, dropout_ratio=0.5, n_epochs=10,
                  pool_size=(2, 2), model_output_dir=None, activation_name='sigmoid', depth=4,
                  n_base_filters=16, n_classes=2, batch_normalization=False, min_receptive_field_size=None,
-                 loss='binary_crossentropy', metrics=['accuracy'], learning_rate=1e-6,
+                 loss='binary_crossentropy', metrics=['accuracy'], learning_rate=1e-6, optimizer='adam',
                  early_stopping_patience=10, learning_rate_patience=5, validation_split=0.3):
         self.n_dense_neurons = n_dense_neurons
         self.dropout_ratio = dropout_ratio
         self.input_shape = tuple(input_shape)
-        self.net_name = '_'.join([net_name, '{}d'.format(len(self.input_shape))])
+        self.net_name = '-'.join([net_name, '{}d'.format(len(self.input_shape))])
         self.n_epochs = n_epochs
         self.activation_name = activation_name
         self.pool_size = pool_size
@@ -43,6 +42,7 @@ class CNN(object):
         self.loss = loss
         self.metrics = metrics
         self.learning_rate = learning_rate
+        self.optimizer = optimizer
         self.early_stopping_patience = early_stopping_patience
         self.learning_rate_patience = learning_rate_patience
         self.validation_split = validation_split
@@ -161,11 +161,25 @@ class CNN(object):
         model = Model(inputs=inputs, outputs=predictions)
         return model
 
+    def _get_optimizer(self):
+        """Returns initialized optimizer.
+        """
+        if self.optimizer.lower() == 'adam':
+            return keras.optimizers.Adam(lr=self.learning_rate)
+        elif self.optimizer.lower() == 'sgd':
+            return keras.optimizers.SGD(lr=self.learning_rate)
+        elif self.optimizer.lower() == 'rmsprop':
+            return keras.optimizers.RMSprop(lr=self.learning_rate)
+        elif self.optimizer.lower() == 'nadam':
+            return keras.optimizers.Nadam(lr=self.learning_rate)
+        else:
+            raise ValueError('There is no \'{}\' optimizer.'.format(self.optimizer))
+
     def _get_model(self):
         """Compiles a model from provided architecture.
         """
         model = self._build_model()
-        model.compile(optimizer=Adam(lr=self.learning_rate),
+        model.compile(optimizer=self._get_optimizer(),
                       loss=self.loss,
                       metrics=self.metrics)
         return model
@@ -346,5 +360,7 @@ class DataGenerator(keras.utils.Sequence):
         # Normalize data if required
         if self.normalize:
             X = self._normalize_data(X)
+
+        y = keras.utils.to_categorical(y, self.n_classes).astype(np.uint8)
 
         return X, y
