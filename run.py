@@ -211,7 +211,7 @@ The commands are:
         parser.add_argument('--num-classes',
                             type=int,
                             help='Number of classes to predict',
-                            default=1)
+                            default=2)
         parser.add_argument('--activation-name',
                             type=str,
                             help='Name of activation function',
