@@ -12,6 +12,14 @@ from keras.models import Model, Sequential
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
+USE_AUG = True
+try:
+    from imgaug import augmenters as iaa
+except ImportError:
+    USE_AUG = False
+    logger.error('Module \'imgaug\' was not found, data '
+                 'augmentation will not be performed')
+
 from model import utils
 
 K.set_image_data_format('channels_last')

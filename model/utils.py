@@ -15,14 +15,6 @@ import requests
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-USE_AUG = True
-try:
-    from imgaug import augmenters as iaa
-except ImportError:
-    USE_AUG = False
-    logger.error('Module \'imgaug\' was not found, data '
-                 'augmentation will not be performed')
-
 
 def get_interp_by_name(interp_name):
     """Get interpolation flag by name.

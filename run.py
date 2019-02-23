@@ -45,7 +45,7 @@ def run_training(args):
     steps_per_epoch_mult = args.aug_steps_epoch_multiplier \
                                 if args.do_augmentation else 1
 
-    if not utils.USE_AUG:
+    if not network.USE_AUG:
         aug_params = None
         steps_per_epoch_mult = 1
 
