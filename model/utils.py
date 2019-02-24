@@ -193,12 +193,11 @@ def predict_with_image_url(model, url, processing_kwargs=None, prob_threshold=0.
     img_proc = img_proc[np.newaxis, ..., np.newaxis]
     img_proc = img_proc.astype(np.float32)
     img_proc /= norm_value
-    prob = np.squeeze(model.predict(img_proc, verbose=0)).item()
-    cls_id = int(prob >= prob_threshold)
+    prob = np.squeeze(model.predict(img_proc, verbose=0)).tolist()
 
     return {
-        'probabilities': [prob, 1. - prob],
-        'class_name': ['straight', 'bent'],
+        'probabilities': prob,
+        'class_name': ['bent', 'straight'],
         'bounding_box': {
             'x': obj_bbox[0],
             'y': obj_bbox[1],
