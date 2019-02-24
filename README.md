@@ -6,12 +6,16 @@ Build a container.
 sudo docker build -t image-cnn:latest .
 ```
 
-Run traning of a model with a default parameters and save a model parameters to /app/model-output/params.ini.
+Run traning of a model wit data augmentation and save a model parameters to /app/model-output/params.ini.
 ```sh
-sudo docker run -v ~/images:/app/images -it -d image-cnn run.py \
-train --images-dir /app/images/*/*.jpeg --network-name net \
---model-output-dir /app/model-output --model-params-output-path /app/model-output/params.ini \
---num-epochs 50  --verbosity 1
+ sudo docker run -v ~/images:/app/images -it -d image-cnn run.py train \
+ --images-dir /app/images/*/*.jpeg --network-name net \
+ --model-output-dir /app/model-output \
+ --model-params-output-path /app/model-output/params.ini \
+ --num-epochs 100 --depth 4 --num-base-filters 8 \
+ --num-dense-neurons 128 --batch-size 8 --batch-normalization  \
+ --learning-rate 0.001 --num-classes 2 --optimizer-name rmsprop \
+ --do-augmentation --verbosity 1 --print-model
 ```
 
 Save state of the container.
