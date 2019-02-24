@@ -12,6 +12,9 @@ from keras.models import Model, Sequential
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 USE_AUG = True
 try:
     from imgaug import augmenters as iaa
@@ -24,18 +27,18 @@ from model import utils
 
 K.set_image_data_format('channels_last')
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 class CNN(object):
     """Convolutional neural network with adjustable architecture.
     """
-    def __init__(self, input_shape=(128, 128), net_name='network', n_dense_neurons=1000, dropout_ratio=0.5, n_epochs=10,
-                 pool_size=(2, 2), model_output_dir=None, activation_name='sigmoid', depth=4,
-                 n_base_filters=16, n_classes=2, batch_normalization=False, min_receptive_field_size=None,
-                 loss='binary_crossentropy', metrics=['accuracy'], learning_rate=1e-6, optimizer='adam',
-                 early_stopping_patience=10, learning_rate_patience=5, validation_split=0.3):
+    def __init__(self, input_shape=(128, 128), net_name='network',
+                 n_dense_neurons=1000, dropout_ratio=0.5, n_epochs=10,
+                 pool_size=(2, 2), model_output_dir=None, activation_name='sigmoid',
+                 depth=4, n_base_filters=16, n_classes=2, batch_normalization=False,
+                 use_double_convolution=False, min_receptive_field_size=None,
+                 loss='binary_crossentropy', metrics=['accuracy'],
+                 learning_rate=1e-6, optimizer='adam', early_stopping_patience=10,
+                 learning_rate_patience=5, validation_split=0.3):
         self.n_dense_neurons = n_dense_neurons
         self.dropout_ratio = dropout_ratio
         self.input_shape = tuple(input_shape)
@@ -47,6 +50,7 @@ class CNN(object):
         self.n_base_filters = n_base_filters
         self.n_classes = n_classes
         self.batch_normalization = batch_normalization
+        self.use_double_convolution = use_double_convolution
         self.loss = loss
         self.metrics = metrics
         self.learning_rate = learning_rate
@@ -90,7 +94,6 @@ class CNN(object):
         """
         net = cls()
         net.__dict__.update(kwargs)
-        net.input_shape = tuple(net.input_shape)
         net.model = net._get_model()
         net.model.load_weights(net.model_path)
         return net
@@ -153,10 +156,12 @@ class CNN(object):
                                                     kernel=(3, 3),
                                                     n_filters=(self.n_base_filters + layer_depth*2)*2,
                                                     batch_normalization=self.batch_normalization)
-            layer2 = self._create_convolution_block(input_layer=layer1,
-                                                    kernel=(3, 3),
-                                                    n_filters=(self.n_base_filters + (layer_depth+1)*2)*2,
-                                                    batch_normalization=self.batch_normalization)
+            layer2 = layer1
+            if self.use_double_convolution:
+                layer2 = self._create_convolution_block(input_layer=layer1,
+                                                        kernel=(3, 3),
+                                                        n_filters=(self.n_base_filters + (layer_depth+1)*2)*2,
+                                                        batch_normalization=self.batch_normalization)
             if layer_depth < (self.depth - 2):
                 current_layer = MaxPooling2D(pool_size=self.pool_size)(layer2)
             else:

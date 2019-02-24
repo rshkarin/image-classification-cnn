@@ -81,6 +81,7 @@ def run_training(args):
                       n_base_filters=args.num_base_filters,
                       n_classes=args.num_classes,
                       batch_normalization=args.batch_normalization,
+                      use_double_convolution=args.use_double_convolution,
                       min_receptive_field_size=args.min_receptive_field,
                       loss=args.loss_name,
                       metrics=[args.accuracy_name],
@@ -89,6 +90,9 @@ def run_training(args):
                       early_stopping_patience=args.early_stopping_patience,
                       learning_rate_patience=args.learning_rate_patience,
                       validation_split=args.validation_split)
+
+    if args.print_model:
+        logger.info(net._get_model().summary())
 
     net.train_with_generator(train_gen,
                              valid_gen,
@@ -219,6 +223,10 @@ The commands are:
         parser.add_argument('--batch-normalization',
                             action='store_true',
                             help='Use batch normalization')
+        parser.add_argument('--use-double-convolution',
+                            action='store_true',
+                            help='Forces each convolutional block have '
+                                 'two convolutional layers')
         parser.add_argument('--min-receptive-field',
                             help='Minimal size of receptive field',
                             default=None)
@@ -316,6 +324,9 @@ The commands are:
                             type=str,
                             help='Keyword in a name of a invalid image',
                             default='bad')
+        parser.add_argument('--print-model',
+                            action='store_true',
+                            help='Print a model architecture before a training process')
         parser.add_argument('--verbosity',
                             type=int,
                             help='Verbosity of a training process',
